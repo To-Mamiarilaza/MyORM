@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import generalisation.annotations.DBField;
 import generalisation.annotations.DBTable;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
 
 /**
@@ -197,8 +198,12 @@ public class GenericUtil {
         // Return tous les valeurs des champs d'un objet
         Field[] champs = objet.getClass().getDeclaredFields();
         Object[] objectValue = new Object[champs.length];
+        
         for (int i = 0; i < champs.length; i++) {
-            objectValue[i] = GenericUtil.getFieldValue(objet, champs[i].getName());
+            // Ne prends pas en comptes les attributs non modifiable
+            if (!Modifier.isFinal(champs[i].getModifiers())) {
+                objectValue[i] = GenericUtil.getFieldValue(objet, champs[i].getName());
+            }
         }
         return objectValue;
     }
