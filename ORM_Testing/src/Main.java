@@ -23,8 +23,8 @@ public class Main {
         
         /// Pour avoir la liste de tous les persons
         /// La deuxieme argument 'suppl' est utilisée si nous voulons ajouter de requete supplementaire comme WHERE ou ORDER BY ...
-        //List<Person> persons = GenericDAO.getAll(Person.class, null, null);
-        // GenericUtil.detailList(persons);
+        List<Person> persons = GenericDAO.getAll(Person.class, null, null);
+        GenericUtil.detailList(persons);
         
         /// Modifier une personne ayant un ID donnée par le nouvelle objet donnée
         

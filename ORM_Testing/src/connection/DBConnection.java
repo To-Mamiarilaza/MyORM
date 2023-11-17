@@ -18,6 +18,8 @@ public class DBConnection {
             String user = "postgres";       // User dans postgres
             String mdp = "postgres";       // Mot de passe
             
+            Class.forName("org.postgresql.Driver");
+            
             // Creation de l'objet de connection
             Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost:5432/" + database, user,  mdp);
             
