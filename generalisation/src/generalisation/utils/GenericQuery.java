@@ -77,7 +77,11 @@ public class GenericQuery {
             } else if (fields[i].getType() == String.class) {
                 statement.setString(i + 1, (String) valeurs[i]);
             } else if (fields[i].getType() == Integer.class) {
-                statement.setInt(i + 1, (int) valeurs[i]);
+                if (valeurs[i] == null) {
+                    statement.setNull(i + 1, java.sql.Types.INTEGER);
+                } else {
+                    statement.setInt(i + 1, (int) valeurs[i]);
+                }
             } else if (fields[i].getType() == Double.class) {
                 statement.setDouble(i + 1, (double) valeurs[i]);
             } else if (fields[i].getType() == Float.class) {
