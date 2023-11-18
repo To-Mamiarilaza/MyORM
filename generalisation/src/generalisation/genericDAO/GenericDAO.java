@@ -40,7 +40,12 @@ public class GenericDAO {
             } else if (champs[i].getType() == String.class) {
                 arguments[i] = resultat.getString(champs[i].getAnnotation(DBField.class).name());
             } else if (champs[i].getType() == Integer.class) {
-                arguments[i] = resultat.getInt(champs[i].getAnnotation(DBField.class).name());
+                String stringValue = resultat.getString(champs[i].getAnnotation(DBField.class).name());
+                if (stringValue == null) {
+                    arguments[i] = null;
+                } else {
+                    arguments[i] = resultat.getInt(champs[i].getAnnotation(DBField.class).name());
+                }
             } else if (champs[i].getType() == Double.class) {
                 arguments[i] = resultat.getDouble(champs[i].getAnnotation(DBField.class).name());
             } else if (champs[i].getType() == Float.class) {
