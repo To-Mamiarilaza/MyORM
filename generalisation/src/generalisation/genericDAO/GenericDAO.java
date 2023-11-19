@@ -80,7 +80,6 @@ public class GenericDAO {
         Statement statement = null;
         try {
             statement = connection.createStatement();
-            System.out.println(sql);
             statement.executeUpdate(sql);
         } catch (Exception e) {
             throw e;
@@ -96,7 +95,6 @@ public class GenericDAO {
             statement = connection.prepareStatement(sql);
             GenericQuery.setAllStatementValue(statement, objet);
             
-            System.out.println(statement.toString());
             statement.executeUpdate();
         } catch (Exception e) {
             throw e;
@@ -111,7 +109,6 @@ public class GenericDAO {
         ResultSet resultat = null;
         try {
             statement = connection.createStatement();
-            System.out.println(sql);
             resultat = statement.executeQuery(sql);
 
             List<T> listes = new ArrayList();
