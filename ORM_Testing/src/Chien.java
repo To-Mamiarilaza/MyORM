@@ -18,14 +18,14 @@ public class Chien {
     @DBField(name = "id_chien", isPrimaryKey = true)
     String idChien;
     
-    @DBField(name = "id_person", isForeignKey = true)
+    @DBField(name = "id_person", isForeignKey = true, getChild = false)
     Person person;
     
     @DBField(name = "name")
     String name;
     
     @DBField(name = "price")
-    double price;
+    Double price;
     
     /// Getter and setter
 
@@ -53,24 +53,24 @@ public class Chien {
         this.name = name;
     }
 
-    public double getPrice() {
+    public Double getPrice() {
         return price;
     }
 
-    public void setPrice(double price) {
+    public void setPrice(Double price) {
         this.price = price;
     }
 
     /// Constructor
 
-    public Chien(String idChien, Person person, String name, double price) {
+    public Chien(String idChien, Person person, String name, Double price) {
         this.idChien = idChien;
         this.person = person;
         this.name = name;
         this.price = price;
     }
 
-    public Chien(Person person, String name, double price) {
+    public Chien(Person person, String name, Double price) {
         this.person = person;
         this.name = name;
         this.price = price;

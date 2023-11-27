@@ -15,17 +15,17 @@ import generalisation.annotations.DBTable;
 @DBTable(name = "sexe", sequenceName = "seq_sexe")
 public class Sexe {
     @DBField(name = "id_sexe", isPrimaryKey = true)
-    int idSexe;
+    Integer idSexe;
     
     @DBField(name = "sexe")
     String sexe;
     
     // Encapsulation
-    public int getIdSexe() {
+    public Integer getIdSexe() {
         return idSexe;
     }
 
-    public void setIdSexe(int idSexe) {
+    public void setIdSexe(Integer idSexe) {
         this.idSexe = idSexe;
     }
 
@@ -47,7 +47,7 @@ public class Sexe {
     }
 
 
-    public Sexe(int idSexe, String sexe) {
+    public Sexe(Integer idSexe, String sexe) {
         this.idSexe = idSexe;
         this.sexe = sexe;
     }

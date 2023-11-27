@@ -1,7 +1,5 @@
 Bonjour a tous !
-Je suis MAMIARILAZA To Niasimandimby, Etudiant en troisième année à l' IT University.
-Je vais vous décrire de manière simple le manuelle d'utilisation de mon ORM. Celle ci
-fonctionne principalement par reflexion
+Voici une petite guide d'utilisation de cette librarie ORM
 
 # MANUELLE D'UTILISATION
 
@@ -15,14 +13,11 @@ un java.sql.Connection pour que l'ORM puisse prendre le connection en fonction d
 
 - Lors du création de vos table les primary key qui doivent se générer automatiquement doivent être associé avec un séquence. Donc pour chaque table on doit crée des séquences.
 - Voila la liste des types supporté autre que les Classe foreign key :
-    . int, Integer
-    . double, Double
-    . float, Float
-    . boolean, Boolean
-    . String
-    . LocalDate
-    . LocalDateTime
-    . LocalTime
+    . Integer <--> INTEGER
+    . Double <--> DOUBLE PRECISION
+    . Float <--> FLOAT
+    . BigDecimal <--> DECIMAL(x, y)
+    . String <--> VARCHAR
 
 - Pour le moment l' ORM supporte uniquement un seule primary key qui soit un integer ou un varchar.
 
@@ -34,8 +29,6 @@ un java.sql.Connection pour que l'ORM puisse prendre le connection en fonction d
 
 - Ensuite, les attributs doivent suivre ces quelques règles :
     - L'arrangement des attributs dans la classe doit être pour le moment le même qu'avec les colonnes du tables
-    - Et de même les arguments du constructeur doit être arrangé de même que les attributs du classe
-
     - Les attributs pris en compte lors du mapping doivent être annoté avec @DBField
     Les attributs de @DBField :
     - name : le nom du colonne correspondant a l'attribut dans le table
@@ -46,11 +39,7 @@ un java.sql.Connection pour que l'ORM puisse prendre le connection en fonction d
 
 - Apres, On doit crée des getters et setters pour chacun des attributs. Et ils doivent avoir le format "set" ou "get" + "NomDuField". # Avec le premier lettre en majuscule
   
-- Enfin, au niveau du constructeur :
-    - On doit crée trois constructeur par defaut :
-        1. Un constructeur vide
-        2. Un constructeur avec tous les attributs pris en charge dans le mapping bien ordonnée
-        3. Un constructeur avec tous les attributs sauf le primary key qui va être généré
+- Enfin, un constructeur vide est requis pour permettre la reflection
 
 3. Les fonctions CRUD
     Pour chaque fonction , le paramètre connection doit être fourni si on veut faire un transaction sinon on passe null.
@@ -77,8 +66,6 @@ un java.sql.Connection pour que l'ORM puisse prendre le connection en fonction d
 
 4. Les évolutions à faire
     - Cette ORM n'est pas encore multibase de données, le problème c'est au niveau du prise de la valeur next du sequence
-    - Les dates supportés sont seulement les types java.time....
     - Le fait de devoir ordonnée les attributs selon la colonne des tables peut être frustrant a long terme, on doit changer la formation du requette
-    - Le boucle de formatage peut être encore optimisé
-    - On peut peut etre ne plus être forcé de crée des getters et setters et constructeurs
+    - Une fonction de base find(Object object) est encore a implémenté
  

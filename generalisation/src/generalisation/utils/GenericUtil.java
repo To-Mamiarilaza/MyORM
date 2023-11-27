@@ -18,9 +18,9 @@ import java.util.List;
  * @author to
  */
 public class GenericUtil {
-    public static int countDBField(Object objet) throws Exception {
+    public static int countDBField(Object object) throws Exception {
         int nb = 0;
-        Field[] champs = objet.getClass().getDeclaredFields();
+        Field[] champs = object.getClass().getDeclaredFields();
         for (int i = 0; i < champs.length; i++) {
             if (champs[i].getAnnotation(DBField.class) != null) {
                 nb++;
@@ -29,9 +29,9 @@ public class GenericUtil {
         return nb;
     }
     
-    public static Field[] getDBField(Object objet) throws Exception {
-        Field[] champs = objet.getClass().getDeclaredFields();
-        Field[] results = new Field[countDBField(objet)];
+    public static Field[] getDBField(Object object) throws Exception {
+        Field[] champs = object.getClass().getDeclaredFields();
+        Field[] results = new Field[countDBField(object)];
         int indice = 0;
         for (int i = 0; i < champs.length; i++) {
             if (champs[i].getAnnotation(DBField.class) != null) {
@@ -46,7 +46,7 @@ public class GenericUtil {
         System.out.println("Les elements du tableau :");
         System.out.println("------------------------");
         for (int i = 0; i < listes.length; i++) {
-            System.out.println(detailObjetList(listes[i]));
+            System.out.println(detailObjectList(listes[i]));
         }
     }
     
@@ -54,30 +54,30 @@ public class GenericUtil {
         System.out.println("Les elements du listes :");
         System.out.println("------------------------");
         for (int i = 0; i < listes.size(); i++) {
-            System.out.println(detailObjetList(listes.get(i)));
+            System.out.println(detailObjectList(listes.get(i)));
         }
     }
     
-    public static void detailObjet(Object objet) throws Exception {
-        Field[] champs = objet.getClass().getDeclaredFields();
-        Object[] valeurs = parseGlobalObjectValue(objet);
+    public static void detailObject(Object object) throws Exception {
+        Field[] champs = object.getClass().getDeclaredFields();
+        Object[] valeurs = parseGlobalObjectValue(object);
         if (valeurs.length == 0) {
-            System.out.println(objet.toString());
+            System.out.println(object.toString());
             return;
         }
         
-        System.out.println("Detail de l'objet : " + objet);
+        System.out.println("Detail de l'object : " + object);
         
         for (int i = 0; i < champs.length; i++) {
             System.out.println("- " + champs[i].getName() + " : " + valeurs[i]);
         }
     }
     
-    public static String detailObjetList(Object objet) throws Exception {
-        Field[] champs = objet.getClass().getDeclaredFields();
-        Object[] valeurs = parseGlobalObjectValue(objet);
+    public static String detailObjectList(Object object) throws Exception {
+        Field[] champs = object.getClass().getDeclaredFields();
+        Object[] valeurs = parseGlobalObjectValue(object);
             
-        if (valeurs.length == 0) return objet.toString();
+        if (valeurs.length == 0) return object.toString();
         
         String resultat = "";
         for (int i = 0; i < champs.length; i++) {
@@ -86,13 +86,13 @@ public class GenericUtil {
         return resultat.substring(0, resultat.length() - 3);
     }
     
-    public static int getNextId(Object objet, Connection connection) throws Exception {
-        // Donne a un objet la valeur de l'id avant save
+    public static int getNextId(Object object, Connection connection) throws Exception {
+        // Donne a un object la valeur de l'id avant save
         Statement statement = null;
         ResultSet resultat = null;
         try {
             statement = connection.createStatement();
-            String sql = "SELECT nextval('" + objet.getClass().getAnnotation(DBTable.class).sequenceName() + "')";
+            String sql = "SELECT nextval('" + object.getClass().getAnnotation(DBTable.class).sequenceName() + "')";
             resultat = statement.executeQuery(sql);
             resultat.next();
             
@@ -103,8 +103,8 @@ public class GenericUtil {
         }
     }
     
-    public static String prepareNextStringId(Object objet, int newId) {
-        String prefix = objet.getClass().getAnnotation(DBTable.class).prefix();
+    public static String prepareNextStringId(Object object, int newId) {
+        String prefix = object.getClass().getAnnotation(DBTable.class).prefix();
         
         int zeroNumber = 4;
         String newIdString = String.valueOf(newId);
@@ -121,13 +121,13 @@ public class GenericUtil {
     }
     
     // Get the next sequence and give it to the new Object
-    public static void giveObjectId(Object objet, Connection connection) throws Exception {
+    public static void giveObjectId(Object object, Connection connection) throws Exception {
         // Get the primary key field
-        Field primaryKeyField = getPrimaryKeyField(objet);
+        Field primaryKeyField = getPrimaryKeyField(object);
         if (primaryKeyField == null) return;
         String setterName = "set" + GenericUtil.firstUpperCase(primaryKeyField.getName());
         
-        int id = getNextId(objet, connection);
+        int id = getNextId(object, connection);
         
         
         // The setter for the primary key field
@@ -135,29 +135,42 @@ public class GenericUtil {
         Object[] argument = new Object[1];
         
         // si int ou string comment faire
-        if (primaryKeyField.getType() == int.class) {
+        if (primaryKeyField.getType() == int.class || primaryKeyField.getType() == Integer.class) {
             argument[0] = id;
             
             Class[] parametre = new Class[1];
-            parametre[0] = int.class;
-            setter = objet.getClass().getDeclaredMethod(setterName, parametre);
+            parametre[0] = primaryKeyField.getType();
+            setter = object.getClass().getDeclaredMethod(setterName, parametre);
         } else if (primaryKeyField.getType() == String.class) {
-            argument[0] = GenericUtil.prepareNextStringId(objet, id);
+            argument[0] = GenericUtil.prepareNextStringId(object, id);
             
             Class[] parametre = new Class[1];
-            parametre[0] = String.class;
-            setter = objet.getClass().getDeclaredMethod(setterName, parametre);
+            parametre[0] = primaryKeyField.getType();
+            setter = object.getClass().getDeclaredMethod(setterName, parametre);
         } else {
             throw new Exception("Le cle primaire doit etre un entier ou un string !");
         }
         
-        setter.invoke(objet, argument);
+        setter.invoke(object, argument);
+    }
+    
+    // Set a value to a field using setter
+    public static void setFieldValue(Object object, Field field, Object value) throws Exception {
+        String setterName = "set" + GenericUtil.firstUpperCase(field.getName());
+        
+        // Get the setter
+        Class[] parametre = {field.getType()};
+        Method setter = object.getClass().getDeclaredMethod(setterName, parametre);
+        
+        // Invoke the setter
+        Object[] argument = {value};
+        setter.invoke(object, argument);
     }
     
     // Set object id manually
-    public static void setObjectIdManually(Object objet, Object id) throws Exception {
+    public static void setObjectIdManually(Object object, Object id) throws Exception {
         // Get the primary key field
-        Field primaryKeyField = getPrimaryKeyField(objet);
+        Field primaryKeyField = getPrimaryKeyField(object);
         String setterName = "set" + GenericUtil.firstUpperCase(primaryKeyField.getName());
         
         // The setter for the primary key field
@@ -170,39 +183,39 @@ public class GenericUtil {
             
             Class[] parametre = new Class[1];
             parametre[0] = int.class;
-            setter = objet.getClass().getDeclaredMethod(setterName, parametre);
+            setter = object.getClass().getDeclaredMethod(setterName, parametre);
         } else if (primaryKeyField.getType() == String.class) {
             argument[0] = (String) id;
             
             Class[] parametre = new Class[1];
             parametre[0] = String.class;
-            setter = objet.getClass().getDeclaredMethod(setterName, parametre);
+            setter = object.getClass().getDeclaredMethod(setterName, parametre);
         } else {
             throw new Exception("Le cle primaire doit etre un entier ou un string !");
         }
         
-        setter.invoke(objet, argument);
+        setter.invoke(object, argument);
     }
     
-    public static Object[] parseObjectValue(Object objet) throws Exception {
-        // Return tous les valeurs des champs d'un objet
-        Field[] champs = GenericUtil.getDBField(objet);
+    public static Object[] parseObjectValue(Object object) throws Exception {
+        // Return tous les valeurs des champs d'un object
+        Field[] champs = GenericUtil.getDBField(object);
         Object[] objectValue = new Object[champs.length];
         for (int i = 0; i < champs.length; i++) {
-            objectValue[i] = GenericUtil.getFieldValue(objet, champs[i].getName());
+            objectValue[i] = GenericUtil.getFieldValue(object, champs[i].getName());
         }
         return objectValue;
     }
     
-    public static Object[] parseGlobalObjectValue(Object objet) throws Exception {
-        // Return tous les valeurs des champs d'un objet
-        Field[] champs = objet.getClass().getDeclaredFields();
+    public static Object[] parseGlobalObjectValue(Object object) throws Exception {
+        // Return tous les valeurs des champs d'un object
+        Field[] champs = object.getClass().getDeclaredFields();
         Object[] objectValue = new Object[champs.length];
         
         for (int i = 0; i < champs.length; i++) {
             // Ne prends pas en comptes les attributs non modifiable
             if (!Modifier.isFinal(champs[i].getModifiers())) {
-                objectValue[i] = GenericUtil.getFieldValue(objet, champs[i].getName());
+                objectValue[i] = GenericUtil.getFieldValue(object, champs[i].getName());
             }
         }
         return objectValue;
@@ -216,43 +229,43 @@ public class GenericUtil {
         return first + over;
     }
     
-    public static Object getFieldValue(Object objet, String fieldName) throws Exception {
+    public static Object getFieldValue(Object object, String fieldName) throws Exception {
         // Prends la valeur d'un champs
         String getter = "get" + GenericUtil.firstUpperCase(fieldName);
         Class[] parametres = new Class[0];
-        Method method = objet.getClass().getDeclaredMethod(getter, parametres);
+        Method method = object.getClass().getDeclaredMethod(getter, parametres);
         
         Object[] arguments = new Object[0];
-        Object result = method.invoke(objet, arguments);
+        Object result = method.invoke(object, arguments);
         return result;
     }
     
-    public static Field getPrimaryKeyField(Object objet) throws Exception {
+    public static Field getPrimaryKeyField(Object object) throws Exception {
         // Trouve le champs cle primaire
-        Field[] champs = GenericUtil.getDBField(objet);
+        Field[] champs = GenericUtil.getDBField(object);
         for (int i = 0; i < champs.length; i++) {
             if (champs[i].getAnnotation(DBField.class).isPrimaryKey() == true) {
                 return champs[i];
             }
         }
-        return null;
+        throw new Exception("Aucun cle primaire trouvé dans " + object.getClass().getName());
     }
     
-    public static Constructor getClassConstructor(Object objet) throws Exception {
-        // Prends le constructeur d'un objet
-        Field[] champs = GenericUtil.getDBField(objet);
+    public static Constructor getClassConstructor(Object object) throws Exception {
+        // Prends le constructeur d'un object
+        Field[] champs = GenericUtil.getDBField(object);
         
         Class[] parametres = new Class[champs.length];
         for(int i = 0; i < parametres.length; i++) {
             parametres[i] = champs[i].getType();
         }
         
-        Constructor result = objet.getClass().getConstructor(parametres);
+        Constructor result = object.getClass().getConstructor(parametres);
         return result;
     }
     
     public static <T extends Object> T newEmptyObject(Class<T> objectClass) throws Exception {
-        // Prends le constructeur d'un objet
+        // Prends le constructeur d'un object
         Class[] parametres = new Class[0];
         Constructor construct = objectClass.getConstructor(parametres);
         
