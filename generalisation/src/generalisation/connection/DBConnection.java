@@ -85,6 +85,7 @@ public abstract class DBConnection {
             File file = new File(classLoader.getResource("connection.properties").toURI());
             reader = new FileReader(file);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new Exception("Le fichier de propriété connection.properties est introuvable !");
         }
 
