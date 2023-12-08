@@ -2,8 +2,6 @@
 import generalisation.annotations.DBField;
 import generalisation.annotations.DBTable;
 import java.time.LocalDate;
-import java.time.LocalDate;
-import java.sql.Date;
 import java.util.List;
 
 /*
@@ -34,7 +32,7 @@ public class Person {
     Sexe sexe;
     
     @DBField(name = "date_naissance")
-    Date dateNaissance;
+    LocalDate dateNaissance;
     
     List<Chien> chiens;
     
@@ -72,11 +70,11 @@ public class Person {
         this.sexe = sexe;
     }
 
-    public Date getDateNaissance() {
+    public LocalDate getDateNaissance() {
         return dateNaissance;
     }
 
-    public void setDateNaissance(Date dateNaissance) {
+    public void setDateNaissance(LocalDate dateNaissance) {
         this.dateNaissance = dateNaissance;
     }
 
@@ -88,7 +86,24 @@ public class Person {
         this.chiens = chiens;
     }
     
+    // Constructor
+    
     public Person() {
+    }
+
+    public Person(String idPerson, String name, String firstname, Sexe sexe, LocalDate dateNaissance) {
+        this.idPerson = idPerson;
+        this.name = name;
+        this.firstname = firstname;
+        this.sexe = sexe;
+        this.dateNaissance = dateNaissance;
+    }
+
+    public Person(String name, String firstname, Sexe sexe, LocalDate dateNaissance) {
+        this.name = name;
+        this.firstname = firstname;
+        this.sexe = sexe;
+        this.dateNaissance = dateNaissance;
     }
     
 }

@@ -18,6 +18,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DBTable {
     String name();
-    String sequenceName();
+    boolean autoIncrement() default false;
+    String sequenceName() default "";
     String prefix() default "";
 }

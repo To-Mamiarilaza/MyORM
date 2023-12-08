@@ -11,21 +11,27 @@ un java.sql.Connection pour que l'ORM puisse prendre le connection en fonction d
 
 2. Mapping de classe et table
 
-- Lors du création de vos table les primary key qui doivent se générer automatiquement doivent être associé avec un séquence. Donc pour chaque table on doit crée des séquences.
+- Lors du création de vos table si vous souhaitez incrementer automatiquement : 
+	- Metter le type en SERIAL ou AUTO INCREMENT si on choisit d'utiliser l'ID en integer	
+	- Mais si on veut utiliser un VARCHAR comme ID, il faut crée un sequence et un prefix pour l'ID de preference
+
 - Voila la liste des types supporté autre que les Classe foreign key :
     . Integer <--> INTEGER
     . Double <--> DOUBLE PRECISION
     . Float <--> FLOAT
     . BigDecimal <--> DECIMAL(x, y)
     . String <--> VARCHAR
+    . sql.Date ou time.LocalDate <--> Date
+    . sql.Timestamp ou time.LocalDateTime <--> Timestamp ou DateTime
 
 - Pour le moment l' ORM supporte uniquement un seule primary key qui soit un integer ou un varchar.
 
 - Dans le classe de mapping on doit annoter la classe avec @DBTable
     Les attributs de @DBTable :
     - name : C'est le nom de la table correspondant au classe
-    - sequenceName : C'est le nom du séquence associé
+    - sequenceName : C'est le nom du séquence associé si on veut associer a un séquence
     - prefix : C'est le préfix ajouter avant le séquence si le primary key est un varchar
+    - autoIncrement : Si on veut que la valeur de l'ID s'incrémente automatiquement ( ID Integer uniquement )
 
 - Ensuite, les attributs doivent suivre ces quelques règles :
     - L'arrangement des attributs dans la classe doit être pour le moment le même qu'avec les colonnes du tables
@@ -41,7 +47,18 @@ un java.sql.Connection pour que l'ORM puisse prendre le connection en fonction d
   
 - Enfin, un constructeur vide est requis pour permettre la reflection
 
-3. Les fonctions CRUD
+3. Connection vers la base de données
+	Pour la connection, nous devons ajouter un fichier connection.properties dans le dossier racine elle contient :
+	. datasource.url=connectionString ( end with "/" )
+	. datasource.database=databaseName
+	. datasource.username=user
+	. datasource.password=password
+	. datasource.type=databaseType
+
+	Ensuite l'ORM va prendre les informations de connection dans ce fichier et gérer la connection pour vous,
+	mais si vous avez besoin de l'objet connection vous pouvez l'avoir par la method GenericDAO.getConnection()
+
+4. Les fonctions CRUD
     Pour chaque fonction , le paramètre connection doit être fourni si on veut faire un transaction sinon on passe null.
 
     Dans le main du projet de test il y a un exemple chaqun des fonctions, mais je vais resumé un peu :
@@ -64,8 +81,7 @@ un java.sql.Connection pour que l'ORM puisse prendre le connection en fonction d
 
     - GenericUtil.detailObjet(Object) --> Affiche en console le detail d'une objet
 
-4. Les évolutions à faire
-    - Cette ORM n'est pas encore multibase de données, le problème c'est au niveau du prise de la valeur next du sequence
+5. Les évolutions à faire
+    - Pour le moment cette ORM supporte uniquement POSTGRES mais la fonctionnalités multibase de données est en développement
     - Le fait de devoir ordonnée les attributs selon la colonne des tables peut être frustrant a long terme, on doit changer la formation du requette
-    - Une fonction de base find(Object object) est encore a implémenté
- 
+    - pagination, calcul généraliser, import CSV

@@ -12,11 +12,11 @@ import java.time.LocalTime;
  *
  * @author To Mamiarilaza
  */
-@DBTable(name = "chien", sequenceName = "seq_chien", prefix = "CHN")
+@DBTable(name = "chien", autoIncrement = true)
 public class Chien {
     /// Field
     @DBField(name = "id_chien", isPrimaryKey = true)
-    String idChien;
+    Integer idChien;
     
     @DBField(name = "id_person", isForeignKey = true, getChild = false)
     Person person;
@@ -29,11 +29,11 @@ public class Chien {
     
     /// Getter and setter
 
-    public String getIdChien() {
+    public Integer getIdChien() {
         return idChien;
     }
 
-    public void setIdChien(String idChien) {
+    public void setIdChien(Integer idChien) {
         this.idChien = idChien;
     }
 
@@ -63,7 +63,7 @@ public class Chien {
 
     /// Constructor
 
-    public Chien(String idChien, Person person, String name, Double price) {
+    public Chien(Integer idChien, Person person, String name, Double price) {
         this.idChien = idChien;
         this.person = person;
         this.name = name;

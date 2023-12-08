@@ -9,10 +9,11 @@
 
 CREATE DATABASE generalisation;
 
-\c generalisation;
+USE generalisation;
 
+CREATE TABLE seq_sexe ( sequence_value INT );
 CREATE TABLE sexe (
-    id_sexe SERIAL PRIMARY KEY,
+    id_sexe INT AUTO_INCREMENT PRIMARY KEY,
     sexe VARCHAR(30)
 );
 
@@ -20,38 +21,38 @@ INSERT INTO sexe (sexe) VALUES
 ('Homme'),
 ('Femme');
 
-CREATE SEQUENCE seq_person START WITH 3;
 CREATE TABLE person (
     id_person VARCHAR(7) PRIMARY KEY,
     name VARCHAR(40),
     firstname VARCHAR(40),
-    id_sexe INTEGER,
+    id_sexe INT,
     date_naissance DATE,
     FOREIGN KEY(id_sexe) REFERENCES sexe(id_sexe)
 );
+
 INSERT INTO person (id_person, name, firstname, id_sexe, date_naissance) VALUES
 ('PER0001', 'MAMIARILAZA', 'To', 1, '2004-07-07'),
 ('PER0002', 'ANDRIANARIVELO', 'Sahaza', 2, '2005-04-17');
 
 CREATE TABLE chien (
-    id_chien SERIAL PRIMARY KEY,
+    id_chien VARCHAR(7),
     id_person VARCHAR(7),
     name VARCHAR(30),
-    price DOUBLE PRECISION,
+    price DOUBLE,
     FOREIGN KEY(id_person) REFERENCES person(id_person)
 );
     
-INSERT INTO chien (id_person, name, price) VALUES
-('PER0001', 'Rockly', 120000),
-('PER0002', 'Bouba', 300000),
-('PER0001', 'Black', 200000);
+INSERT INTO chien(id_chien, id_person, name, price) VALUES
+('CHE0001', 'PER0001', 'Rockly', 120000),
+('CHE0002', 'PER0002', 'Bouba', 300000),
+('CHE0003', 'PER0001', 'Black', 200000);
 
--- Reinitialisation
-ALTER SEQUENCE seq_chien RESTART WITH 1;
-DELETE FROM chien;
+-- Reinitialization
+ALTER TABLE chien AUTO_INCREMENT = 1;
+TRUNCATE TABLE chien;
 
-ALTER SEQUENCE seq_person RESTART WITH 1;
-DELETE FROM person;
+ALTER TABLE person AUTO_INCREMENT = 1;
+TRUNCATE TABLE person;
 
-ALTER SEQUENCE seq_sexe RESTART WITH 1;
-DELETE FROM sexe;
+ALTER TABLE sexe AUTO_INCREMENT = 1;
+TRUNCATE TABLE sexe;

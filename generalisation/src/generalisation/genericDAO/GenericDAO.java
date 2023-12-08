@@ -24,6 +24,30 @@ import java.sql.Date;
  */
 public class GenericDAO {
 
+    // Field
+    static DBConnection connectionManager;
+    public enum Action {
+        INSERT, UPDATE, DELETE, SELECT
+    }
+    
+    // Getter and setter
+    public static DBConnection getConnectionManager() {
+        return connectionManager;
+    }
+
+    public static void setConnectionManager(DBConnection connectionManager) {
+        GenericDAO.connectionManager = connectionManager;
+    }
+
+    // Get convenable connection
+    public static Connection getConnection() throws Exception {
+        if (getConnectionManager() == null) {
+            setConnectionManager(DBConnection.getConnectionManager());
+        }
+
+        return getConnectionManager().getConnection();
+    }
+
     // Les types pris en charge sont : int , double, float, boolean, Integer, Double, Float, Boolean, String, LocalDate, LocalDateTime, LocalTime
     public static void setFieldsvalue(ResultSet resultat, Object object, Connection connection) throws Exception {
         Field[] champs = GenericUtil.getDBField(object);
@@ -51,27 +75,27 @@ public class GenericDAO {
     }
 
     /// Les fonctions d'éxécution
-    public static void executeUpdate(String sql, Connection connection) throws Exception {
-        // Execution d'une update
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-            statement.executeUpdate(sql);
-        } catch (Exception e) {
-            System.out.println("QUERY : " + sql);
-            throw e;
-        } finally {
-            statement.close();
-        }
-    }
-
-    public static void executePreparedStatement(String sql, Object object, Connection connection) throws Exception {
-        // Execution d'une update
+    // Execute an update
+    public static void executeUpdate(String sql, Object object, Connection connection, Action action) throws Exception {
         PreparedStatement statement = null;
+        ResultSet resultSet = null;
         try {
-            statement = connection.prepareStatement(sql);
-            GenericQuery.setAllStatementValue(statement, object);
+            statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            if (sql.contains("?")) {
+                GenericQuery.setStatementValue(statement, object, true, action);
+            }
+            
             statement.executeUpdate();
+            
+            // autoincrement <==> integer
+            if (action == Action.INSERT && object.getClass().getAnnotation(DBTable.class).autoIncrement()) {
+                Field pk = GenericUtil.getPrimaryKeyField(object);
+                resultSet = statement.getGeneratedKeys();
+                resultSet.next(); 
+                Integer newId = resultSet.getInt(pk.getAnnotation(DBField.class).name());
+                GenericUtil.setFieldValue(object, pk, newId);
+            }
+            
         } catch (Exception e) {
             System.out.println("QUERY : " + statement.toString());
             throw e;
@@ -80,13 +104,18 @@ public class GenericDAO {
         }
     }
 
-    public static <T extends Object> List executeQuery(String sql, T object, Connection connection) throws Exception {
-        // Execution d'une selection
-        Statement statement = null;
+    // execute a query
+    public static <T extends Object> List executeQuery(String sql, Object object, Connection connection) throws Exception {
+
+        PreparedStatement statement = null;
         ResultSet resultat = null;
+
         try {
-            statement = connection.createStatement();
-            resultat = statement.executeQuery(sql);
+            statement = connection.prepareStatement(sql);
+            if (sql.contains("?")) {
+                GenericQuery.setStatementValue(statement, object, false, Action.SELECT);
+            }
+            resultat = statement.executeQuery();
 
             List<T> listes = new ArrayList();
             while (resultat.next()) {
@@ -95,32 +124,70 @@ public class GenericDAO {
                 GenericDAO.setFieldsvalue(resultat, temp, connection);
                 listes.add((T) temp);
             }
+
             return listes;
         } catch (Exception e) {
-            System.out.println("QUERY : " + sql);
+            System.out.println("QUERY : " + statement.toString());
             throw e;
         } finally {
-            statement.close();
             if (resultat != null) {
                 resultat.close();
             }
+            statement.close();
+        }
+    }
+
+/// Fonctions principale
+    // Count the number of row in a table
+    public static int count(Class objectClass, Connection connection) throws Exception {
+        Object object = GenericUtil.newEmptyObject(objectClass);
+        
+        Statement statement = null;
+        ResultSet resultset = null;
+        
+        try {
+            int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
+            if (connection == null) {
+                closeIndice = 0;
+                connection = getConnection();
+            }
+
+            String sql = GenericQuery.getCountQuery(object);
+            statement = connection.createStatement();
+            resultset = statement.executeQuery(sql);
+
+            resultset.next();
+            int count = resultset.getInt("count");
+            
+            if (closeIndice == 0) {
+                connection.close();
+            }
+            
+            return count;
+        } catch (Exception e) {
+            if (resultset != null) resultset.close();
+            if (statement != null) statement.close();
+            if (connection != null) connection.close();
+            
+            throw e;
         }
     }
     
-    
+    public static int count(Class objectClass) throws Exception {
+        return count(objectClass, null);
+    }
 
-/// Fonctions principale
     // change completement la ligne d'un table en cette object
-    public static void updateById(Object object, Object id, Connection connection) throws Exception {
+    public static void update(Object object, Object id, Connection connection) throws Exception {
         String sql = GenericQuery.getUpdateQuery(object, id);
         try {
             int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
             if (connection == null) {
                 closeIndice = 0;
-                connection = DBConnection.getConnection();
+                connection = getConnection();
             }
 
-            GenericDAO.executePreparedStatement(sql, object, connection);
+            GenericDAO.executeUpdate(sql, object, connection, Action.UPDATE);
 
             if (closeIndice == 0) {
                 connection.commit();
@@ -133,18 +200,16 @@ public class GenericDAO {
         }
     }
 
-    public static void updateById(Object object, Connection connection) throws Exception {
+    public static void update(Object object, Connection connection) throws Exception {
         Field pk = GenericUtil.getPrimaryKeyField(object);
         Object id = GenericUtil.getFieldValue(object, pk.getName());
-        
-        updateById(object, id, connection);
+
+        update(object, id, connection);
     }
-    
-    public static void updateBydId(Object object) throws Exception {
-        updateById(object, null);
+
+    public static void update(Object object) throws Exception {
+        update(object, null);
     }
-    
-    
 
     public static void deleteById(Class objectClass, Object id, Connection connection) throws Exception {
         String errorDisplay = null;
@@ -154,12 +219,12 @@ public class GenericDAO {
             int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
             if (connection == null) {
                 closeIndice = 0;
-                connection = DBConnection.getConnection();
+                connection = getConnection();
             }
 
             String sql = GenericQuery.getDeleteQuery(object, id);
             errorDisplay = sql;
-            GenericDAO.executeUpdate(sql, connection);
+            GenericDAO.executeUpdate(sql, null, connection, Action.DELETE);
 
             if (closeIndice == 0) {
                 connection.commit();
@@ -171,7 +236,7 @@ public class GenericDAO {
             throw e;
         }
     }
-    
+
     public static void deleteById(Class objectClass, Object id) throws Exception {
         deleteById(objectClass, id, null);
     }
@@ -182,7 +247,7 @@ public class GenericDAO {
 
         deleteById(object.getClass(), id, connection);
     }
-    
+
     public static void deleteById(Object object) throws Exception {
         Field pk = GenericUtil.getPrimaryKeyField(object);
         Object id = GenericUtil.getFieldValue(object, pk.getName());
@@ -197,25 +262,66 @@ public class GenericDAO {
             int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
             if (connection == null) {
                 closeIndice = 0;
-                connection = DBConnection.getConnection();
+                connection = getConnection();
             }
 
-            GenericUtil.giveObjectId(object, connection);
-            GenericDAO.executePreparedStatement(sql, object, connection);
+            // Si l' ID dépend d'un séquence
+            if (GenericUtil.hasPrimaryKeyField(object)) {
+                if (!object.getClass().getAnnotation(DBTable.class).sequenceName().equals("")) {
+                    GenericUtil.giveObjectId(object, connection);
+                } else if (object.getClass().getAnnotation(DBTable.class).autoIncrement()) {
+                    sql = GenericUtil.setPrimaryKeyToDefault(sql);
+                }
+            }
+
+            // Execution du mis a jour et prendre l' ID inséré
+            GenericDAO.executeUpdate(sql, object, connection, Action.INSERT);
 
             if (closeIndice == 0) {
                 connection.commit();
                 connection.close();
             }
         } catch (Exception e) {
-            connection.rollback();
-            connection.close();
+            if (connection != null) {
+                connection.rollback();
+                connection.close();
+            }
             throw e;
         }
     }
 
     public static void save(Object object) throws Exception {
         save(object, null);
+    }
+
+    // Where multicritere
+    public static <T extends Object> List find(Object object, Connection connection) throws Exception {
+        try {
+            String sql = GenericQuery.getFindQuery(object);
+
+            int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
+            if (connection == null) {
+                closeIndice = 0;
+                connection = getConnection();
+            }
+
+            List<T> listes = GenericDAO.executeQuery(sql, object, connection);
+
+            if (closeIndice == 0) {
+                connection.close();
+            }
+
+            return listes;
+        } catch (Exception e) {
+            if (connection != null) {
+                connection.close();
+            }
+            throw e;
+        }
+    }
+
+    public static <T extends Object> List find(Object object) throws Exception {
+        return find(object, null);
     }
 
     // selection d'un object dans un table par son ID
@@ -227,7 +333,7 @@ public class GenericDAO {
             int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
             if (connection == null) {
                 closeIndice = 0;
-                connection = DBConnection.getConnection();
+                connection = getConnection();
             }
 
             List<T> listes = GenericDAO.executeQuery(sql, object, connection);
@@ -242,8 +348,9 @@ public class GenericDAO {
 
             return resultat;
         } catch (Exception e) {
-            e.printStackTrace();
-            connection.close();
+            if (connection != null) {
+                connection.close();
+            }
             throw e;
         }
     }
@@ -261,7 +368,7 @@ public class GenericDAO {
             int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
             if (connection == null) {
                 closeIndice = 0;
-                connection = DBConnection.getConnection();
+                connection = getConnection();
             }
 
             List<T> listes = GenericDAO.executeQuery(sql, object, connection);
@@ -271,8 +378,9 @@ public class GenericDAO {
 
             return listes;
         } catch (Exception e) {
-            e.printStackTrace();
-            connection.close();
+            if (connection != null) {
+                connection.close();
+            }
             throw e;
         }
     }
@@ -293,7 +401,7 @@ public class GenericDAO {
             int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
             if (connection == null) {
                 closeIndice = 0;
-                connection = DBConnection.getConnection();
+                connection = getConnection();
             }
 
             List<T> listes = GenericDAO.executeQuery(sql, object, connection);
@@ -303,8 +411,9 @@ public class GenericDAO {
 
             return listes;
         } catch (Exception e) {
-            e.printStackTrace();
-            connection.close();
+            if (connection != null) {
+                connection.close();
+            }
             throw e;
         }
     }
@@ -319,19 +428,20 @@ public class GenericDAO {
             int closeIndice = 1;    // 0 si on doit le fermer et 1 sinon
             if (connection == null) {
                 closeIndice = 0;
-                connection = DBConnection.getConnection();
+                connection = getConnection();
             }
 
-            GenericDAO.executeUpdate(sql, connection);
+            GenericDAO.executeUpdate(sql, null, connection, Action.UPDATE);
 
             if (closeIndice == 0) {
                 connection.commit();
                 connection.close();
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            connection.rollback();
-            connection.close();
+            if (connection != null) {
+                connection.rollback();
+                connection.close();
+            }
             throw e;
         }
     }

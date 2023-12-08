@@ -9,6 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import generalisation.annotations.DBField;
 import generalisation.annotations.DBTable;
+import generalisation.genericDAO.GenericDAO;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
@@ -91,8 +92,10 @@ public class GenericUtil {
         Statement statement = null;
         ResultSet resultat = null;
         try {
+            String sql = GenericDAO.getConnectionManager().getNextIdQuery();
+            sql = String.format(sql, object.getClass().getAnnotation(DBTable.class).sequenceName());
+            
             statement = connection.createStatement();
-            String sql = "SELECT nextval('" + object.getClass().getAnnotation(DBTable.class).sequenceName() + "')";
             resultat = statement.executeQuery(sql);
             resultat.next();
             
@@ -122,9 +125,13 @@ public class GenericUtil {
     
     // Get the next sequence and give it to the new Object
     public static void giveObjectId(Object object, Connection connection) throws Exception {
-        // Get the primary key field
+        // Get the primary key field there is 
         Field primaryKeyField = getPrimaryKeyField(object);
-        if (primaryKeyField == null) return;
+        
+        // if the pk field already have a value, we don't change anything
+        Object pkValue = GenericUtil.getFieldValue(object, primaryKeyField.getName());
+        if (pkValue != null) return;
+        
         String setterName = "set" + GenericUtil.firstUpperCase(primaryKeyField.getName());
         
         int id = getNextId(object, connection);
@@ -135,7 +142,7 @@ public class GenericUtil {
         Object[] argument = new Object[1];
         
         // si int ou string comment faire
-        if (primaryKeyField.getType() == int.class || primaryKeyField.getType() == Integer.class) {
+        if (primaryKeyField.getType() == Integer.class) {
             argument[0] = id;
             
             Class[] parametre = new Class[1];
@@ -249,6 +256,22 @@ public class GenericUtil {
             }
         }
         throw new Exception("Aucun cle primaire trouvé dans " + object.getClass().getName());
+    }
+    
+    public static boolean hasPrimaryKeyField(Object object) throws Exception {
+        // Trouve le champs cle primaire
+        Field[] champs = GenericUtil.getDBField(object);
+        for (int i = 0; i < champs.length; i++) {
+            if (champs[i].getAnnotation(DBField.class).isPrimaryKey() == true) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public static String setPrimaryKeyToDefault(String sql) {
+        // "(" pour identifier le debut qui est pour le moment la clé primaire
+        return sql.replace("(?", "(DEFAULT");
     }
     
     public static Constructor getClassConstructor(Object object) throws Exception {

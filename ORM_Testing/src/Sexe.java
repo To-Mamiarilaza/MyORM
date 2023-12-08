@@ -12,7 +12,7 @@ import generalisation.annotations.DBTable;
  * @author to
  */
 
-@DBTable(name = "sexe", sequenceName = "seq_sexe")
+@DBTable(name = "sexe", autoIncrement = true)
 public class Sexe {
     @DBField(name = "id_sexe", isPrimaryKey = true)
     Integer idSexe;
