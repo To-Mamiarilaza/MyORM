@@ -5,12 +5,12 @@
 package generalisation.connection;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Method;
+import java.net.URL;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.util.HashMap;
 
 /**
@@ -78,8 +78,13 @@ public abstract class DBConnection {
 
         FileReader reader;
         try {
-            reader = new FileReader("connection.properties");
-        } catch (FileNotFoundException e) {
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            URL url = classLoader.getResource("connection.properties");
+            if (url == null) throw new Exception();
+            
+            File file = new File(classLoader.getResource("connection.properties").toURI());
+            reader = new FileReader(file);
+        } catch (Exception e) {
             throw new Exception("Le fichier de propriété connection.properties est introuvable !");
         }
 

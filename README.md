@@ -48,7 +48,7 @@ un java.sql.Connection pour que l'ORM puisse prendre le connection en fonction d
 - Enfin, un constructeur vide est requis pour permettre la reflection
 
 3. Connection vers la base de données
-	Pour la connection, nous devons ajouter un fichier connection.properties dans le dossier racine elle contient :
+	Pour la connection, nous devons ajouter un fichier connection.properties dans le dossier contenant les classes, elle contient :
 	. datasource.url=connectionString ( end with "/" )
 	. datasource.database=databaseName
 	. datasource.username=user
