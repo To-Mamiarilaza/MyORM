@@ -185,11 +185,11 @@ public class GenericUtil {
         Object[] argument = new Object[1];
         
         // si int ou string comment faire
-        if (primaryKeyField.getType() == int.class) {
-            argument[0] = (int) id;
+        if (primaryKeyField.getType() == Integer.class) {
+            argument[0] = (Integer) id;
             
             Class[] parametre = new Class[1];
-            parametre[0] = int.class;
+            parametre[0] = Integer.class;
             setter = object.getClass().getDeclaredMethod(setterName, parametre);
         } else if (primaryKeyField.getType() == String.class) {
             argument[0] = (String) id;
